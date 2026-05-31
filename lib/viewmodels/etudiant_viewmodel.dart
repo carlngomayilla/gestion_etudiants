@@ -27,6 +27,12 @@ class EtudiantViewModel extends ChangeNotifier {
 
   EtudiantViewModel(this._repository);
 
+  /// Charge les données persistées au démarrage, puis rafraîchit les Vues.
+  Future<void> charger() async {
+    await _repository.charger();
+    notifyListeners();
+  }
+
   String _recherche = '';
   String? _filiereFiltre; // null = toutes les filières
   TriEtudiant _tri = TriEtudiant.nomAsc;
@@ -77,7 +83,9 @@ class EtudiantViewModel extends ChangeNotifier {
           final f = a.filiere.toLowerCase().compareTo(b.filiere.toLowerCase());
           return f != 0
               ? f
-              : a.nomComplet.toLowerCase().compareTo(b.nomComplet.toLowerCase());
+              : a.nomComplet
+                  .toLowerCase()
+                  .compareTo(b.nomComplet.toLowerCase());
         });
     }
     return triee;
@@ -197,6 +205,14 @@ class EtudiantViewModel extends ChangeNotifier {
     if (_filiereFiltre != null && !filieres.contains(_filiereFiltre)) {
       _filiereFiltre = null;
     }
+    notifyListeners();
+  }
+
+  /// Restaure un étudiant supprimé (utilisé par l'action « Annuler »).
+  ///
+  /// L'étudiant est réinséré tel quel, avec son identifiant d'origine.
+  void restaurer(Etudiant etudiant) {
+    _repository.ajouter(etudiant);
     notifyListeners();
   }
 

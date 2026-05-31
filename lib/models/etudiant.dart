@@ -96,7 +96,6 @@ class Etudiant {
       Object.hash(id, nom, prenom, matricule, email, filiere, niveau);
 
   @override
-  String toString() =>
-      'Etudiant(id: $id, $nomComplet, matricule: $matricule, '
+  String toString() => 'Etudiant(id: $id, $nomComplet, matricule: $matricule, '
       'filiere: $filiere, niveau: $niveau)';
 }

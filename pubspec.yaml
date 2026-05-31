@@ -11,6 +11,8 @@ dependencies:
     sdk: flutter
   # Gestion d'état pour l'architecture MVVM (le ViewModel = ChangeNotifier)
   provider: ^6.1.5+1
+  # Persistance locale des données (les étudiants survivent à la fermeture)
+  shared_preferences: ^2.3.2
   cupertino_icons: ^1.0.8
 
 dev_dependencies:

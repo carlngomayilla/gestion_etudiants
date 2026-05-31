@@ -104,7 +104,9 @@ class _EtudiantFormViewState extends State<EtudiantFormView> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.estModification ? 'Modifier l\'étudiant' : 'Ajouter un étudiant',
+          widget.estModification
+              ? 'Modifier l\'étudiant'
+              : 'Ajouter un étudiant',
         ),
       ),
       body: Form(

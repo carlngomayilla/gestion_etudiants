@@ -1,81 +1,91 @@
 # Gestion des étudiants — Flutter (MVVM)
 
-Mini application de gestion des étudiants : **ajouter**, **modifier**, **supprimer**
-et **afficher la liste** (avec recherche).
+[![CI](https://github.com/carlngomayilla/gestion_etudiants/actions/workflows/ci.yml/badge.svg)](https://github.com/carlngomayilla/gestion_etudiants/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter)](https://flutter.dev)
 
-## Architecture MVVM
+Application Flutter de gestion des étudiants : **ajouter**, **modifier**,
+**supprimer**, **rechercher**, **trier**, **filtrer** et visualiser des
+**statistiques** — le tout avec une **persistance locale** des données et un
+**thème clair / sombre**.
+
+## ✨ Fonctionnalités
+
+- ✅ Liste des étudiants avec **avatars colorés** et **badge de niveau** (L1…M2)
+- ✅ Ajouter / modifier / supprimer (avec **confirmation** et **annulation**)
+- ✅ **Matricule unique** et mis en **MAJUSCULES** automatiquement
+- ✅ **Recherche** (nom, matricule, filière, email, niveau) + bouton effacer
+- ✅ **Tri** (nom A→Z / Z→A, matricule, filière) et **filtre par filière** (chips)
+- ✅ **Écran de détail** (tap sur une carte) avec en-tête en dégradé
+- ✅ **Statistiques** : répartition par filière et par niveau (barres + %)
+- ✅ **Persistance locale** : les données survivent à la fermeture de l'app
+- ✅ **Thème clair / sombre** basculable (et mémorisé)
+- ✅ Identifiants garantis uniques (pas de collision d'horloge)
+
+## 🏛️ Architecture MVVM
 
 ```
 lib/
-├── main.dart                  # Point d'entrée + injection du ViewModel (Provider)
+├── main.dart                       # Point d'entrée + injection des ViewModels
 ├── models/
-│   └── etudiant.dart          # MODEL : structure de données immuable
+│   └── etudiant.dart               # MODEL : structure de données immuable
 ├── repositories/
-│   └── etudiant_repository.dart  # Source de données (en mémoire)
+│   └── etudiant_repository.dart    # Source de données (mémoire + SharedPreferences)
 ├── viewmodels/
-│   └── etudiant_viewmodel.dart   # VIEWMODEL : état + logique métier (ChangeNotifier)
+│   ├── etudiant_viewmodel.dart     # VIEWMODEL : état + logique métier (CRUD, tri, filtre)
+│   └── theme_viewmodel.dart        # VIEWMODEL : thème clair / sombre persisté
 ├── views/
-│   ├── etudiant_list_view.dart   # VIEW : liste des étudiants
-│   └── etudiant_form_view.dart   # VIEW : formulaire ajout / modification
-└── widgets/
-    └── etudiant_tile.dart        # Widget réutilisable (carte étudiant)
+│   ├── etudiant_list_view.dart     # VIEW : liste + recherche + tri + filtres
+│   ├── etudiant_form_view.dart     # VIEW : formulaire ajout / modification
+│   ├── etudiant_detail_view.dart   # VIEW : détail d'un étudiant
+│   └── statistiques_view.dart      # VIEW : statistiques
+├── widgets/
+│   └── etudiant_tile.dart          # Widget réutilisable (carte étudiant)
+└── utils/
+    └── avatar_couleur.dart         # Couleur d'avatar déterministe
 ```
 
 | Couche      | Rôle |
 |-------------|------|
 | **Model**     | Représente les données (`Etudiant`). Aucune logique d'UI. |
 | **View**      | Affiche l'UI et capte les interactions. Aucune logique métier. |
-| **ViewModel** | Contient l'état + la logique (CRUD, recherche). Notifie les Vues via `notifyListeners()`. |
+| **ViewModel** | Contient l'état + la logique. Notifie les Vues via `notifyListeners()`. |
 
-La gestion d'état repose sur le package **`provider`** : le `ViewModel` est un
-`ChangeNotifier`, les Vues l'observent avec `Consumer` / `context.watch` et lui
-envoient des actions avec `context.read`.
+La gestion d'état repose sur le package **`provider`** : les `ViewModel` sont des
+`ChangeNotifier`, les Vues les observent avec `Consumer` / `context.watch` et
+leur envoient des actions avec `context.read`. Le `Repository` isole l'accès aux
+données : passer à SQLite, une API REST ou Firebase ne demanderait de modifier
+**que cette couche**.
 
-## Prérequis
+## 🚀 Lancer le projet
 
-Flutter n'est pas encore installé sur cette machine. Installe-le :
-1. Télécharge le SDK : https://docs.flutter.dev/get-started/install/windows
-2. Ajoute `flutter\bin` au `PATH`, puis vérifie avec `flutter doctor`.
-
-## Lancer le projet
-
-Depuis le dossier du projet :
+Prérequis : [Flutter](https://docs.flutter.dev/get-started/install) installé
+(`flutter doctor`). Sur **Windows**, activer le **Mode développeur** (requis par
+les plugins) : `start ms-settings:developers`.
 
 ```powershell
-# 1. Générer les dossiers de plateforme (android, web, windows…)
-#    Ne touche PAS aux fichiers de lib/ déjà présents.
-flutter create .
-
-# 2. Récupérer les dépendances
 flutter pub get
-
-# 3. Lancer (choisis une cible : windows, chrome, ou un émulateur)
-flutter run -d windows
-# ou
-flutter run -d chrome
+flutter run -d chrome    # ou -d windows
 ```
 
-> ⚠️ Si après `flutter create .` le fichier `lib/main.dart` a été remplacé par
-> l'exemple par défaut, restaure simplement la version fournie ici.
-
-## Lancer les tests
+## 🧪 Tests & qualité
 
 ```powershell
-flutter test
+flutter analyze    # analyse statique (0 problème attendu)
+flutter test       # tests unitaires du ViewModel et du Model
+dart format .      # formatage
 ```
 
-## Fonctionnalités
+L'**intégration continue** ([GitHub Actions](.github/workflows/ci.yml)) lance
+automatiquement le formatage, l'analyse et les tests à chaque `push` et `pull
+request` sur `main`.
 
-- ✅ Afficher la liste des étudiants (avec compteur « résultats / total »)
-- ✅ Ajouter un étudiant (validation des champs + **matricule unique**)
-- ✅ Modifier un étudiant (vérifie aussi l'unicité du matricule)
-- ✅ Supprimer un étudiant (avec confirmation)
-- ✅ Rechercher (nom, matricule, filière, email) + bouton « effacer »
-- ✅ Identifiants garantis uniques (compteur de séquence, pas de collision d'horloge)
+## 🗺️ Aller plus loin
 
-## Aller plus loin
+Idées d'améliorations : champs supplémentaires (photo, date de naissance),
+gestion des notes/moyennes, export CSV/JSON, sélection multiple, localisation
+FR/EN, layout adaptatif (master-detail sur tablette/desktop).
 
-Le `EtudiantRepository` stocke les données **en mémoire** (perdues à la fermeture).
-Pour une persistance réelle, réimplémente ses méthodes avec `sqflite`,
-`shared_preferences`, une API REST ou Firebase — **sans rien changer** au
-ViewModel ni aux Vues.
+## 📄 Licence
+
+Distribué sous licence **MIT** — voir le fichier [LICENSE](LICENSE).

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../models/etudiant.dart';
 import '../viewmodels/etudiant_viewmodel.dart';
+import '../viewmodels/theme_viewmodel.dart';
 import '../widgets/etudiant_tile.dart';
 import 'etudiant_detail_view.dart';
 import 'etudiant_form_view.dart';
@@ -76,9 +77,18 @@ class _EtudiantListViewState extends State<EtudiantListView> {
     );
 
     if (confirme == true && context.mounted) {
-      context.read<EtudiantViewModel>().supprimer(etudiant.id);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${etudiant.nomComplet} supprimé(e)')),
+      final vm = context.read<EtudiantViewModel>();
+      final messenger = ScaffoldMessenger.of(context);
+      vm.supprimer(etudiant.id);
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('${etudiant.nomComplet} supprimé(e)'),
+          action: SnackBarAction(
+            label: 'Annuler',
+            onPressed: () => vm.restaurer(etudiant),
+          ),
+        ),
       );
     }
   }
@@ -90,6 +100,14 @@ class _EtudiantListViewState extends State<EtudiantListView> {
         title: const Text('Gestion des étudiants'),
         centerTitle: true,
         actions: [
+          // Bascule du thème clair / sombre.
+          Consumer<ThemeViewModel>(
+            builder: (context, theme, _) => IconButton(
+              icon: Icon(theme.estSombre ? Icons.light_mode : Icons.dark_mode),
+              tooltip: theme.estSombre ? 'Thème clair' : 'Thème sombre',
+              onPressed: theme.basculer,
+            ),
+          ),
           // Menu de tri.
           Consumer<EtudiantViewModel>(
             builder: (context, vm, _) => PopupMenuButton<TriEtudiant>(

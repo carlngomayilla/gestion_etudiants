@@ -24,7 +24,8 @@ class EtudiantDetailView extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Supprimer'),
-        content: Text('Voulez-vous vraiment supprimer ${etudiant.nomComplet} ?'),
+        content:
+            Text('Voulez-vous vraiment supprimer ${etudiant.nomComplet} ?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -39,10 +40,21 @@ class EtudiantDetailView extends StatelessWidget {
     );
 
     if (confirme == true && context.mounted) {
-      context.read<EtudiantViewModel>().supprimer(etudiant.id);
+      final vm = context.read<EtudiantViewModel>();
+      // On capture le messenger AVANT de fermer l'écran (le context du détail
+      // ne sera plus valide après le pop) ; le SnackBar s'affichera sur la liste.
+      final messenger = ScaffoldMessenger.of(context);
+      vm.supprimer(etudiant.id);
       Navigator.of(context).pop(); // ferme le détail
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${etudiant.nomComplet} supprimé(e)')),
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('${etudiant.nomComplet} supprimé(e)'),
+          action: SnackBarAction(
+            label: 'Annuler',
+            onPressed: () => vm.restaurer(etudiant),
+          ),
+        ),
       );
     }
   }

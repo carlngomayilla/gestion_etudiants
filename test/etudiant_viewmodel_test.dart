@@ -2,12 +2,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gestion_etudiants/models/etudiant.dart';
 import 'package:gestion_etudiants/repositories/etudiant_repository.dart';
 import 'package:gestion_etudiants/viewmodels/etudiant_viewmodel.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   late EtudiantViewModel vm;
 
   setUp(() {
-    // Repository neuf à chaque test (contient 2 étudiants de démo).
+    // Repository neuf à chaque test (contient des étudiants de démo).
     vm = EtudiantViewModel(EtudiantRepository());
   });
 
@@ -195,5 +198,57 @@ void main() {
     expect(stats.keys.toSet(), Etudiant.niveaux.toSet());
     final somme = stats.values.fold<int>(0, (s, v) => s + v);
     expect(somme, vm.total);
+  });
+
+  test('restaurer remet un étudiant supprimé (avec son id)', () {
+    final cible = vm.etudiants.first;
+    vm.supprimer(cible.id);
+    expect(vm.getById(cible.id), isNull);
+
+    vm.restaurer(cible);
+    expect(vm.getById(cible.id), isNotNull);
+    expect(vm.getById(cible.id), equals(cible)); // mêmes données qu'avant
+  });
+
+  group('Persistance (SharedPreferences)', () {
+    test('charger() persiste les données de démo puis les recharge', () async {
+      SharedPreferences.setMockInitialValues({});
+
+      // 1er lancement : aucune donnée persistée -> on sauvegarde la démo.
+      final repo1 = EtudiantRepository();
+      await repo1.charger();
+      final attendu = repo1.getAll().length;
+
+      // 2e lancement : les données persistées doivent être rechargées.
+      final repo2 = EtudiantRepository();
+      await repo2.charger();
+      expect(repo2.getAll().length, attendu);
+    });
+
+    test('un ajout est bien persisté et rechargé', () async {
+      SharedPreferences.setMockInitialValues({});
+
+      final vm1 = EtudiantViewModel(EtudiantRepository());
+      await vm1.charger();
+      final avant = vm1.total;
+      vm1.ajouter(
+        nom: 'Sow',
+        prenom: 'Fatou',
+        matricule: 'ETU-999',
+        email: 'fatou.sow@univ.sn',
+        filiere: 'Mathématiques',
+        niveau: 'L2',
+      );
+      // Laisse la sauvegarde asynchrone se terminer.
+      await Future<void>.delayed(Duration.zero);
+
+      final vm2 = EtudiantViewModel(EtudiantRepository());
+      await vm2.charger();
+      expect(vm2.total, avant + 1);
+      expect(
+        vm2.etudiants.any((e) => e.matricule == 'ETU-999'),
+        isTrue,
+      );
+    });
   });
 }
